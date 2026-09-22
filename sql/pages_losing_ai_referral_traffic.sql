@@ -7,23 +7,36 @@
 -- searchdata_url_impression table, not guessed from memory.
 --
 -- Window logic matches geo-visibility-tracker/weekly_diff.py's
--- window_bounds(): trailing is the 7 days ending today, preceding is
--- the 7 days directly before that, applied here by page instead of by
--- brand.
+-- window_bounds(): trailing is the 7 days ending on the anchor date,
+-- preceding is the 7 days directly before that, applied here by page
+-- instead of by brand.
+--
+-- The anchor is MAX(data_date) from the table itself, not today's
+-- date. Two reasons: data_date is stamped in Pacific Time per Google's
+-- own docs, while a literal "today" in BigQuery defaults to UTC, so
+-- they don't line up; and bulk exports typically lag 2-3 days behind
+-- the real date, so today and yesterday will usually have zero rows
+-- whenever this actually runs.
 --
 -- Before running: replace YOUR_PROJECT_ID with the BigQuery project you
 -- pointed the export at, and YOUR_DATASET_ID with the dataset name
 -- Search Console created for this property (BigQuery console -> that
 -- project -> the dataset named after the verified property).
 
-WITH trailing AS (
+WITH latest AS (
+  SELECT MAX(data_date) AS latest_date
+  FROM `YOUR_PROJECT_ID.YOUR_DATASET_ID.searchdata_url_impression`
+),
+
+trailing AS (
   SELECT
     url,
     SUM(impressions) AS impressions,
     SUM(clicks) AS clicks
   FROM `YOUR_PROJECT_ID.YOUR_DATASET_ID.searchdata_url_impression`
-  WHERE data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 6 DAY)
-                       AND CURRENT_DATE()
+  CROSS JOIN latest
+  WHERE data_date BETWEEN DATE_SUB(latest_date, INTERVAL 6 DAY)
+                       AND latest_date
   GROUP BY url
 ),
 
@@ -33,8 +46,9 @@ preceding AS (
     SUM(impressions) AS impressions,
     SUM(clicks) AS clicks
   FROM `YOUR_PROJECT_ID.YOUR_DATASET_ID.searchdata_url_impression`
-  WHERE data_date BETWEEN DATE_SUB(CURRENT_DATE(), INTERVAL 13 DAY)
-                       AND DATE_SUB(CURRENT_DATE(), INTERVAL 7 DAY)
+  CROSS JOIN latest
+  WHERE data_date BETWEEN DATE_SUB(latest_date, INTERVAL 13 DAY)
+                       AND DATE_SUB(latest_date, INTERVAL 7 DAY)
   GROUP BY url
 )
 
