@@ -1,0 +1,18 @@
+[project]
+name = "gsc-geo-mcp"
+version = "0.1.0"
+description = "MCP server exposing Search Console data via BigQuery bulk export, for questions like which pages lost AI-referral traffic"
+authors = [
+    { name = "Sujan Deswal", email = "deswalsujan@gmail.com" }
+]
+requires-python = ">=3.9"
+dependencies = [
+    "google-cloud-bigquery>=3.41.0",
+]
+
+[project.scripts]
+gsc-geo-mcp = "gsc_geo_mcp:main"
+
+[build-system]
+requires = ["uv_build>=0.12.11,<0.13.0"]
+build-backend = "uv_build"
