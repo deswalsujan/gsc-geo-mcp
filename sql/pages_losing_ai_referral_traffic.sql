@@ -40,7 +40,7 @@ trailing AS (
   GROUP BY url
 ),
 
-preceding AS (
+previous AS (
   SELECT
     url,
     SUM(impressions) AS impressions,
@@ -53,15 +53,15 @@ preceding AS (
 )
 
 SELECT
-  COALESCE(trailing.url, preceding.url) AS url,
-  COALESCE(preceding.impressions, 0) AS preceding_impressions,
+  COALESCE(trailing.url, previous.url) AS url,
+  COALESCE(previous.impressions, 0) AS preceding_impressions,
   COALESCE(trailing.impressions, 0) AS trailing_impressions,
-  COALESCE(preceding.clicks, 0) AS preceding_clicks,
+  COALESCE(previous.clicks, 0) AS preceding_clicks,
   COALESCE(trailing.clicks, 0) AS trailing_clicks,
-  COALESCE(trailing.impressions, 0) - COALESCE(preceding.impressions, 0) AS impressions_change,
-  COALESCE(trailing.clicks, 0) - COALESCE(preceding.clicks, 0) AS clicks_change
+  COALESCE(trailing.impressions, 0) - COALESCE(previous.impressions, 0) AS impressions_change,
+  COALESCE(trailing.clicks, 0) - COALESCE(previous.clicks, 0) AS clicks_change
 FROM trailing
-FULL OUTER JOIN preceding USING (url)
-WHERE COALESCE(trailing.impressions, 0) >= COALESCE(preceding.impressions, 0)
-  AND COALESCE(trailing.clicks, 0) < COALESCE(preceding.clicks, 0)
+FULL OUTER JOIN previous USING (url)
+WHERE COALESCE(trailing.impressions, 0) >= COALESCE(previous.impressions, 0)
+  AND COALESCE(trailing.clicks, 0) < COALESCE(previous.clicks, 0)
 ORDER BY clicks_change ASC;
