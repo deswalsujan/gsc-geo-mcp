@@ -1,4 +1,3 @@
-# Placeholder entry point. The real MCP server code goes here once the
-# BigQuery export has data to connect to.
-def main() -> None:
-    print("Hello from gsc-geo-mcp!")
+# Entry point for the gsc-geo-mcp command. Starts the MCP server
+# defined in server.py.
+from gsc_geo_mcp.server import main
